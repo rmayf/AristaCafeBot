@@ -1,15 +1,16 @@
 # -*- coding: iso-8859-15 -*-
-# check the emoji
+
 import urllib2
 import datetime
 import re
 from bs4 import BeautifulSoup, NavigableString
 import tweepy
+from ApiKey import Consumer, Token
 
 today = datetime.date.today().strftime( '%a' )
 
 emojiMap = { 
-   'noodles': '🍜'
+   'noodles': '🍜',
    'soup': '🍲',
    'pasta': '🍝',
    'cutlery': '🍴',
@@ -136,10 +137,9 @@ else:
       if len( tweets ) > 2:
          print 'length of tweets exceeds 2 len is %d' % len( tweets )
       #authenticate
-      auth = tweepy.OAuthHandler('qo0d1HmwkPsrkczQS7TQ6dpoN', 'Lz8Zt4rBqJ4hk7La7Qkg6CjxoDcFO0ihhKWZNipwuD9LZTy4Zw' )
-      auth.set_access_token( '3193994563-ePWWIaRGofRTXKnRAT1EQkpfLb6Nl7XnkbvQvnd', 'zAeTbC08fpd2BhNOO2pn0ztSqxtqMCGWjnYypaowGeg9D' )
+      auth = tweepy.OAuthHandler( Consumer.key() , Consumer.secret() )
+      auth.set_access_token( Token.key(), Token.secret() )
       api = tweepy.API(auth)
 
       for tweet in tweets:
-         print tweet 
-        #api.update_status( status=tweet )
+        api.update_status( status=tweet )
