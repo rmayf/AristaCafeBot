@@ -4,8 +4,15 @@ import urllib2
 import datetime
 import re
 from bs4 import BeautifulSoup, NavigableString
-import tweepy
-from ApiKey import Consumer, Token
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument( '-d', '--debug', help='Print results instead of tweeting',
+                     action='store_true' )
+args = parser.parse_args()
+if not args.debug:
+   import tweepy
+   from ApiKey import Consumer, Token
 
 today = datetime.date.today().strftime( '%a' )
 
@@ -47,7 +54,8 @@ wordMap = {
    'cod': ( 'fish', 50 ),
    'pork': ( 'meat', 50 ),
    'bbq': ( 'meat', 50 ),
-   'dim sum': ( 'dumpling', 50 ),
+   'dim': ( 'dumpling', 25 ),
+   'sum': ( 'dumpling', 25 ),
 }
 
 if today in [ 'Sat', 'Sun' ]:
@@ -110,7 +118,7 @@ else:
             ( emoji, weight ) = wordMap.get( foodWord.lower(), ( None, None ) )
             if emoji:
                emojiScore[ emoji ] += weight
-         maxWeight = 20 # threshold
+         maxWeight = 25 # threshold
          emojiWinner = 'cutlery'
          for ( emoji, weight ) in emojiScore.iteritems():
             if weight > maxWeight:
@@ -136,10 +144,15 @@ else:
 
       if len( tweets ) > 2:
          print 'length of tweets exceeds 2 len is %d' % len( tweets )
-      #authenticate
-      auth = tweepy.OAuthHandler( Consumer.key() , Consumer.secret() )
-      auth.set_access_token( Token.key(), Token.secret() )
-      api = tweepy.API(auth)
 
-      for tweet in tweets:
-        api.update_status( status=tweet )
+      if args.debug:
+         for tweet in tweets:
+            print tweet
+      else:
+         #authenticate
+         auth = tweepy.OAuthHandler( Consumer.key() , Consumer.secret() )
+         auth.set_access_token( Token.key(), Token.secret() )
+         api = tweepy.API(auth)
+
+         for tweet in tweets:
+           api.update_status( status=tweet )
