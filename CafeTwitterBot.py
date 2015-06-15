@@ -108,8 +108,13 @@ else:
                   foods.append( unicode( elem.previous_sibling ).strip()  )
                else:
                   soups.append( unicode( elem.previous_sibling ).strip() )
+      def cleanupFoodString( food ):
+         if '-' in food:
+            return food.split( '-', 1 )[ -1 ].strip()
+         else:
+            return food.strip()
 
-      foods = removeDups( map( lambda food: food.split( '-', 1 )[ 1 ].strip(), foods ) )
+      foods = removeDups( map( cleanupFoodString, foods ) )
       soups = removeDups( soups )
       emojiList = []
       for foodLine in foods:
