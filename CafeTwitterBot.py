@@ -139,13 +139,14 @@ else:
       tweets = [ '' ]
       i = 0
       for line in lines:
-         chars = len( line ) + 1
-         if chars + charCount > 140:
-            tweets.append( '' )
-            i += 1
-            charCount = 0
-         tweets[ i ] += line + '\n'
-         charCount += chars
+         if line: 
+            chars = len( line ) + 1
+            if chars + charCount > 140:
+               tweets.append( '' )
+               i += 1
+               charCount = 0
+            tweets[ i ] += line + '\n'
+            charCount += chars
 
       if len( tweets ) > 2:
          print 'length of tweets exceeds 2 len is %d' % len( tweets )
