@@ -139,7 +139,7 @@ else:
       tweets = [ '' ]
       i = 0
       for line in lines:
-         if line: 
+         if line.strip(): 
             chars = len( line ) + 1
             if chars + charCount > 140:
                tweets.append( '' )
