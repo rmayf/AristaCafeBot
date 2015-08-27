@@ -105,9 +105,13 @@ else:
                if type( elem.previous_sibling ) != NavigableString:
                   food_section = True
                elif food_section:
-                  foods.append( unicode( elem.previous_sibling ).strip()  )
+                  food =  unicode( elem.previous_sibling ).strip()  
+                  if food:
+                     foods.append( food )
                else:
-                  soups.append( unicode( elem.previous_sibling ).strip() )
+                  soup =  unicode( elem.previous_sibling ).strip()  
+                  if soup:
+                     soups.append( soup )
       def cleanupFoodString( food ):
          if '-' in food:
             return food.split( '-', 1 )[ -1 ].strip()
