@@ -156,7 +156,7 @@ else:
          print 'length of tweets exceeds 2 len is %d' % len( tweets )
 
       if args.debug:
-         for tweet in tweets:
+         for tweet in reversed( tweets ):
             print tweet
       else:
          #authenticate
@@ -164,5 +164,5 @@ else:
          auth.set_access_token( Token.key(), Token.secret() )
          api = tweepy.API(auth)
 
-         for tweet in tweets:
+         for tweet in reversed( tweets ):
            api.update_status( status=tweet )
