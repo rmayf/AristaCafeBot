@@ -25,6 +25,19 @@ emojiMap = {
    'dumpling': '🍥',
 }
 
+animalEmoji = [
+   '🐉',
+   '🐓',
+   '🐩',
+   '🐋',
+   '🌝',
+   '🐪',
+   '🐂',
+   '🐏',
+   '💩',
+   '🐡',
+]
+
 wordMap = {
    'chicken': ( 'wing', 50 ),
    'pasta': ( 'pasta', 50 ),
@@ -88,6 +101,12 @@ def main( args ):
       # parse resp
       m = re.search( r'components/menu_weekly_alternate\.aspx\?locationid=(?P<locationId>\d+)&pageid=(?P<pageId>\d+)&menuid=(?P<menuId>\d+)',
                      resp.read() )
+      if not m:
+         # Aramark didn't post the fucking menu
+         msg = random.choice( animalEmoji ) + " No menu posted today"
+         tweeter.update_status( status=msg )
+         exit()
+
       assert m.group( 'locationId' )
       assert m.group( 'pageId' )
       assert m.group( 'menuId' )
