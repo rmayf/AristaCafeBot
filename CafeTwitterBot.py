@@ -5,16 +5,7 @@ import datetime
 import re
 from bs4 import BeautifulSoup, NavigableString
 import argparse
-
-parser = argparse.ArgumentParser()
-parser.add_argument( '-d', '--debug', help='Print results instead of tweeting',
-                     action='store_true' )
-args = parser.parse_args()
-if not args.debug:
-   import tweepy
-   from ApiKey import Consumer, Token
-
-today = datetime.date.today().strftime( '%a' )
+import random
 
 emojiMap = { 
    'noodles': '🍜',
@@ -58,111 +49,134 @@ wordMap = {
    'sum': ( 'dumpling', 25 ),
 }
 
-if today in [ 'Sat', 'Sun' ]:
-   print 'not running on the weekends'
-   exit()
+# Factory function for tweepy api class
+def Tweeter():
+   import tweepy
+   from ApiKey import Consumer, Token
+   auth = tweepy.OAuthHandler( Consumer.key() , Consumer.secret() )
+   auth.set_access_token( Token.key(), Token.secret() )
+   return tweepy.API( auth )
 
-try:
-   resp = urllib2.urlopen( 'http://www.aramarkcafe.com/arista' )
-except urllib2.HTTPError as e:
-   print e.code
-   print e.read()
-except urllib2.URLError as e:
-   print e.reason
-else:
-   # parse resp
-   m = re.search( r'components/menu_weekly_alternate\.aspx\?locationid=(?P<locationId>\d+)&pageid=(?P<pageId>\d+)&menuid=(?P<menuId>\d+)',
-                  resp.read() )
-   assert m.group( 'locationId' )
-   assert m.group( 'pageId' )
-   assert m.group( 'menuId' )
+# This class prints tweets to the console
+class ConsoleTweeter():
+   def __init__( self ):
+      pass
+
+   def update_status( self, status=None ):
+      if status:
+         print status
+
+def main( args ):
+   today = datetime.date.today().strftime( '%a' )
+   if today in [ 'Sat', 'Sun' ]:
+      print 'not running on the weekends'
+      exit()
+
+   if args.debug:
+      tweeter = ConsoleTweeter()
+   else:
+      tweeter = Tweeter()
+
    try:
-      resp = urllib2.urlopen( 'http://www.aramarkcafe.com/components/menu_weekly_alternate.aspx?locationid=%s&pageid=%s&menuid=%s'
-                               % ( m.group( 'locationId' ), m.group( 'pageId' ), m.group( 'menuId' ) ) )
+      resp = urllib2.urlopen( 'http://www.aramarkcafe.com/arista' )
    except urllib2.HTTPError as e:
       print e.code
       print e.read()
    except urllib2.URLError as e:
       print e.reason
    else:
-      htmlParser = BeautifulSoup( resp.read() )
-      soups = []
-      foods = []
-      def removeDups( list ):
-         prev = []
-         def f_( elem ):
-            if elem in prev:
-               return False
-            else:
-               prev.append( elem )
-               return True
-         return filter( f_, list )
-      for col in htmlParser.find_all( 'div', 'column' ):
-         if col.find( 'div', 'header', text=lambda s: today in s ):
-            br = col.find_all( 'br' )
-            food_section = False
-            for elem in br[ 1: ]:
-               if type( elem.previous_sibling ) != NavigableString:
-                  food_section = True
-               elif food_section:
-                  food =  unicode( elem.previous_sibling ).strip()  
-                  if food:
-                     foods.append( food )
-               else:
-                  soup =  unicode( elem.previous_sibling ).strip()  
-                  if soup:
-                     soups.append( soup )
-      def cleanupFoodString( food ):
-         if '-' in food:
-            return food.split( '-', 1 )[ -1 ].strip()
-         else:
-            return food.strip()
-
-      foods = removeDups( map( cleanupFoodString, foods ) )
-      soups = removeDups( soups )
-      emojiList = []
-      for foodLine in foods:
-         emojiScore = { k: 0 for k, v in emojiMap.iteritems() }
-         for foodWord in foodLine.split( ' ' ):
-            ( emoji, weight ) = wordMap.get( foodWord.lower(), ( None, None ) )
-            if emoji:
-               emojiScore[ emoji ] += weight
-         maxWeight = 25 # threshold
-         emojiWinner = 'cutlery'
-         for ( emoji, weight ) in emojiScore.iteritems():
-            if weight > maxWeight:
-               maxWeight = weight
-               emojiWinner =  emoji
-         emojiList.append( emojiWinner )
-      foods = map( lambda foodLine, emoji: unicode( emojiMap[ emoji ], 'utf-8' ) + foodLine, foods, emojiList )
-      soups = map( lambda soupLine: unicode( emojiMap[ 'soup' ], 'utf-8' ) + soupLine, soups )
-      
-      # Compose tweet (s)
-      charCount = 0
-      lines = foods + soups
-      tweets = [ '' ]
-      i = 0
-      for line in lines:
-         if line.strip(): 
-            chars = len( line ) + 1
-            if chars + charCount > 140:
-               tweets.append( '' )
-               i += 1
-               charCount = 0
-            tweets[ i ] += line + '\n'
-            charCount += chars
-
-      if len( tweets ) > 2:
-         print 'length of tweets exceeds 2 len is %d' % len( tweets )
-
-      if args.debug:
-         for tweet in reversed( tweets ):
-            print tweet
+      # parse resp
+      m = re.search( r'components/menu_weekly_alternate\.aspx\?locationid=(?P<locationId>\d+)&pageid=(?P<pageId>\d+)&menuid=(?P<menuId>\d+)',
+                     resp.read() )
+      assert m.group( 'locationId' )
+      assert m.group( 'pageId' )
+      assert m.group( 'menuId' )
+      try:
+         resp = urllib2.urlopen( 'http://www.aramarkcafe.com/components/menu_weekly_alternate.aspx?locationid=%s&pageid=%s&menuid=%s'
+                                  % ( m.group( 'locationId' ), m.group( 'pageId' ), m.group( 'menuId' ) ) )
+      except urllib2.HTTPError as e:
+         print e.code
+         print e.read()
+      except urllib2.URLError as e:
+         print e.reason
       else:
-         #authenticate
-         auth = tweepy.OAuthHandler( Consumer.key() , Consumer.secret() )
-         auth.set_access_token( Token.key(), Token.secret() )
-         api = tweepy.API(auth)
+         htmlParser = BeautifulSoup( resp.read() )
+         soups = []
+         foods = []
+         def removeDups( list ):
+            prev = []
+            def f_( elem ):
+               if elem in prev:
+                  return False
+               else:
+                  prev.append( elem )
+                  return True
+            return filter( f_, list )
+         for col in htmlParser.find_all( 'div', 'column' ):
+            if col.find( 'div', 'header', text=lambda s: today in s ):
+               br = col.find_all( 'br' )
+               food_section = False
+               for elem in br[ 1: ]:
+                  if type( elem.previous_sibling ) != NavigableString:
+                     food_section = True
+                  elif food_section:
+                     food =  unicode( elem.previous_sibling ).strip()
+                     if food:
+                        foods.append( food )
+                  else:
+                     soup =  unicode( elem.previous_sibling ).strip()
+                     if soup:
+                        soups.append( soup )
+         def cleanupFoodString( food ):
+            if '-' in food:
+               return food.split( '-', 1 )[ -1 ].strip()
+            else:
+               return food.strip()
 
-         for tweet in reversed( tweets ):
-           api.update_status( status=tweet )
+         foods = removeDups( map( cleanupFoodString, foods ) )
+         soups = removeDups( soups )
+         emojiList = []
+         for foodLine in foods:
+            emojiScore = { k: 0 for k, v in emojiMap.iteritems() }
+            for foodWord in foodLine.split( ' ' ):
+               ( emoji, weight ) = wordMap.get( foodWord.lower(), ( None, None ) )
+               if emoji:
+                  emojiScore[ emoji ] += weight
+            maxWeight = 25 # threshold
+            emojiWinner = 'cutlery'
+            for ( emoji, weight ) in emojiScore.iteritems():
+               if weight > maxWeight:
+                  maxWeight = weight
+                  emojiWinner =  emoji
+            emojiList.append( emojiWinner )
+         foods = map( lambda foodLine, emoji: unicode( emojiMap[ emoji ], 'utf-8' ) + foodLine, foods, emojiList )
+         soups = map( lambda soupLine: unicode( emojiMap[ 'soup' ], 'utf-8' ) + soupLine, soups )
+
+         # Compose tweet (s)
+         charCount = 0
+         lines = foods + soups
+         tweets = [ '' ]
+         i = 0
+         for line in lines:
+            if line.strip():
+               chars = len( line ) + 1
+               if chars + charCount > 140:
+                  tweets.append( '' )
+                  i += 1
+                  charCount = 0
+               tweets[ i ] += line + '\n'
+               charCount += chars
+
+         if len( tweets ) > 2:
+            print 'length of tweets exceeds 2 len is %d' % len( tweets )
+
+         tweets = reversed( tweets )
+         for tweet in tweets:
+           tweeter.update_status( status=tweet )
+
+if __name__ == "__main__":
+   parser = argparse.ArgumentParser()
+   parser.add_argument( '-d', '--debug', help='Print results instead of tweeting',
+                        action='store_true' )
+   args = parser.parse_args()
+   main( args )
