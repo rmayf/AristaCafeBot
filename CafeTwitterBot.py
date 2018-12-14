@@ -25,6 +25,7 @@ emojiMap = {
    'tomato': '🍅',
    'meat': '🍖',
    'dumpling': '🍥',
+   'taco': '🌮',
 }
 
 animalEmoji = [
