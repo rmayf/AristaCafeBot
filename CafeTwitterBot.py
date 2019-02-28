@@ -8,6 +8,11 @@ import argparse
 
 MENU_URL = 'http://www.aramarkcafe.com/layouts/canary_2015/locationhome.aspx?locationid=4119&pageid=20&stationID=-1'
 CAL_REGEX = re.compile( r'\d+.*CAL|TBD' )
+NEWLINE_REGEX = re.compile( r'[\r\n]' )
+FISH_REGEX = re.compile( r'FISH OF THE DAY:', re.IGNORECASE )
+# Eventually might want to add an emoji for these
+GLUTEN_REGEX = re.compile( r'[*\-]*Gluten Free[*\-]*', re.IGNORECASE )
+VEG_REGEX = re.compile( r'VEGETARIAN:', re.IGNORECASE )
 
 emojiMap = { 
    'noodles': '🍜',
@@ -82,6 +87,13 @@ class ConsoleTweeter():
       if status:
          print status
 
+def cleanText( text ):
+   text = NEWLINE_REGEX.sub( ' ', text )
+   for r in ( GLUTEN_REGEX, VEG_REGEX, FISH_REGEX ):
+      text = r.sub( '', text )
+
+   return text.strip()
+
 def getMenuSections( htmlParser, today ):
    """Get a dict of menu section -> menu items for the day"""
    stations = {}
@@ -97,7 +109,7 @@ def getMenuSections( htmlParser, today ):
       for station, menu in zip( stationElements, menuElements ):
          stationName = station.text.strip()
          items = menu.find_all( 'div', class_='noNutritionalLink' )
-         items = map( lambda x: x.text.strip(), items )
+         items = map( lambda x: cleanText( x.text ), items )
          # Get rid of non-menu items (calorie count, TBD text)
          items = filter( lambda x: CAL_REGEX.search( x ) is None, items )
          # Make sure items are unique
