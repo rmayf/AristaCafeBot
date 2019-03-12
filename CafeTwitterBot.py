@@ -86,17 +86,17 @@ def getMenuSections( htmlParser, today ):
    """Get a dict of menu section -> menu items for the day"""
    stations = {}
    # One column per day, plus some extra junk
-   for col in htmlParser.select( 'div.foodMenuDayColumn' ):
+   for col in htmlParser.find_all( 'div', class_='foodMenuDayColumn' ):
       # Find the menu for today
       colDay = col.find( 'h1' )
       if not colDay or colDay.text.strip().lower() != today.lower():
          continue
 
-      stationElements = col.select( '> span.stationUL' )
-      menuElements = col.select( '> ul' )
+      stationElements = col.find_all( 'span', class_='stationUL', recursive=False )
+      menuElements = col.find_all( 'ul', recursive=False )
       for station, menu in zip( stationElements, menuElements ):
          stationName = station.text.strip()
-         items = menu.select( 'div.noNutritionalLink' )
+         items = menu.find_all( 'div', class_='noNutritionalLink' )
          items = map( lambda x: x.text.strip(), items )
          # Get rid of non-menu items (calorie count, TBD text)
          items = filter( lambda x: CAL_REGEX.search( x ) is None, items )
@@ -141,7 +141,7 @@ def main( args ):
    except urllib2.URLError as e:
       print e.reason
    else:
-      htmlParser = BeautifulSoup( resp.read() )
+      htmlParser = BeautifulSoup( resp.read(), features='html.parser' )
       menuData = getMenuSections( htmlParser, today )
       soups, foods = soupsAndOthers( menuData )
       emojiList = []
