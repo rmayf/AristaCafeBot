@@ -7,11 +7,11 @@ from bs4 import BeautifulSoup
 import argparse
 
 MENU_URL = 'http://www.aramarkcafe.com/layouts/canary_2015/locationhome.aspx?locationid=4119&pageid=20&stationID=-1'
-CAL_REGEX = re.compile( r'\d+.*CAL|TBD' )
+CAL_REGEX = re.compile( r'\d+.*CAL|TBD|Closed' )
 NEWLINE_REGEX = re.compile( r'[\r\n]' )
-FISH_REGEX = re.compile( r'FISH OF THE DAY:', re.IGNORECASE )
+FISH_REGEX = re.compile( r'FISH OF THE DAY *[:\-]', re.IGNORECASE )
 # Eventually might want to add an emoji for these
-GLUTEN_REGEX = re.compile( r'[*\-]*Gluten Free[*\-]*', re.IGNORECASE )
+GLUTEN_REGEX = re.compile( r'([*\-]+Gluten Free(.*?[*\-]+)?)', re.IGNORECASE )
 VEG_REGEX = re.compile( r'VEGETARIAN:', re.IGNORECASE )
 
 emojiMap = { 
