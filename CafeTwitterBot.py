@@ -154,6 +154,22 @@ def loadLocalMenu( fileName ):
 
    return None
 
+def createTweets( lines ):
+   charCount = 0
+   tweets = [ '' ]
+   i = 0
+   for line in lines:
+      if line.strip():
+         chars = len( line ) + 1
+         if chars + charCount > 140:
+            tweets.append( '' )
+            i += 1
+            charCount = 0
+         tweets[ i ] += line + '\n'
+         charCount += chars
+
+   return tweets
+
 def main( args ):
    today = datetime.date.today().strftime( '%A' )
    if today in [ 'Saturday', 'Sunday' ]:
@@ -193,19 +209,8 @@ def main( args ):
    soups = map( lambda soupLine: unicode( emojiMap[ 'soup' ], 'utf-8' ) + soupLine, soups )
 
    # Compose tweet (s)
-   charCount = 0
    lines = foods + soups
-   tweets = [ '' ]
-   i = 0
-   for line in lines:
-      if line.strip():
-         chars = len( line ) + 1
-         if chars + charCount > 140:
-            tweets.append( '' )
-            i += 1
-            charCount = 0
-         tweets[ i ] += line + '\n'
-         charCount += chars
+   tweets = createTweets( lines )
 
    if len( tweets ) > 2:
       print 'length of tweets exceeds 2 len is %d' % len( tweets )
