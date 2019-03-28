@@ -171,6 +171,20 @@ def createTweets( lines ):
 
    return tweets
 
+def emojiForFood( food ):
+   emojiScore = { k: 0 for k, v in emojiMap.iteritems() }
+   for foodWord in food.split( ' ' ):
+      ( emoji, weight ) = wordMap.get( foodWord.lower(), ( None, None ) )
+      if emoji:
+         emojiScore[ emoji ] += weight
+   maxWeight = 25  # threshold
+   emojiWinner = 'cutlery'
+   for ( emoji, weight ) in emojiScore.iteritems():
+      if weight > maxWeight:
+         maxWeight = weight
+         emojiWinner = emoji
+   return emojiWinner
+
 def main( args ):
    if args.day_of_week:
       today = args.day_of_week
@@ -195,22 +209,11 @@ def main( args ):
    htmlParser = BeautifulSoup( resp, features='html.parser' )
    menuData = getMenuSections( htmlParser, today )
    soups, foods = soupsAndOthers( menuData )
-   emojiList = []
-   for foodLine in foods:
-      emojiScore = { k: 0 for k, v in emojiMap.iteritems() }
-      for foodWord in foodLine.split( ' ' ):
-         ( emoji, weight ) = wordMap.get( foodWord.lower(), ( None, None ) )
-         if emoji:
-            emojiScore[ emoji ] += weight
-      maxWeight = 25 # threshold
-      emojiWinner = 'cutlery'
-      for ( emoji, weight ) in emojiScore.iteritems():
-         if weight > maxWeight:
-            maxWeight = weight
-            emojiWinner =  emoji
-      emojiList.append( emojiWinner )
-   foods = map( lambda foodLine, emoji: unicode( emojiMap[ emoji ], 'utf-8' ) + foodLine, foods, emojiList )
-   soups = map( lambda soupLine: unicode( emojiMap[ 'soup' ], 'utf-8' ) + soupLine, soups )
+
+   # Add emoji to food lines
+   mapFn = lambda line, emojiFn: unicode( emojiMap[ emojiFn( line ) ], 'utf-8' ) + line
+   foods = map( lambda foodLine: mapFn( foodLine, emojiForFood ), foods )
+   soups = map( lambda soupLine: mapFn( soupLine, lambda x: 'soup' ), soups )
 
    # Compose tweet (s)
    lines = foods + soups
