@@ -112,6 +112,8 @@ def getMenuSections( htmlParser, today ):
          items = map( lambda x: cleanText( x.text ), items )
          # Get rid of non-menu items (calorie count, TBD text)
          items = filter( lambda x: CAL_REGEX.search( x ) is None, items )
+         # Get rid of empty lines
+         items = filter( lambda x: x, items )
          # Make sure items are unique
          items = set( items )
          # Don't bother creating empty sections
@@ -159,14 +161,13 @@ def createTweets( lines ):
    tweets = [ '' ]
    i = 0
    for line in lines:
-      if line.strip():
-         chars = len( line ) + 1
-         if chars + charCount > 140:
-            tweets.append( '' )
-            i += 1
-            charCount = 0
-         tweets[ i ] += line + '\n'
-         charCount += chars
+      chars = len( line ) + 1
+      if chars + charCount > 140:
+         tweets.append( '' )
+         i += 1
+         charCount = 0
+      tweets[ i ] += line + '\n'
+      charCount += chars
 
    return tweets
 
