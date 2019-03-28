@@ -134,6 +134,26 @@ def soupsAndOthers( menuDict ):
 
    return soups, others
 
+def downloadMenu( url ):
+   try:
+      return urllib2.urlopen( url ).read()
+   except urllib2.HTTPError as e:
+      print e.code
+      print e.read()
+   except urllib2.URLError as e:
+      print e.reason
+
+   return None
+
+def loadLocalMenu( fileName ):
+   try:
+      with open( fileName, 'r' ) as f:
+         return f.read()
+   except IOError as e:
+      print e
+
+   return None
+
 def main( args ):
    today = datetime.date.today().strftime( '%A' )
    if today in [ 'Saturday', 'Sunday' ]:
@@ -145,59 +165,59 @@ def main( args ):
    else:
       tweeter = Tweeter()
 
-   try:
-      resp = urllib2.urlopen( MENU_URL )
-   except urllib2.HTTPError as e:
-      print e.code
-      print e.read()
-   except urllib2.URLError as e:
-      print e.reason
+   if args.local_file:
+      resp = loadLocalMenu( args.local_file )
    else:
-      htmlParser = BeautifulSoup( resp.read(), features='html.parser' )
-      menuData = getMenuSections( htmlParser, today )
-      soups, foods = soupsAndOthers( menuData )
-      emojiList = []
-      for foodLine in foods:
-         emojiScore = { k: 0 for k, v in emojiMap.iteritems() }
-         for foodWord in foodLine.split( ' ' ):
-            ( emoji, weight ) = wordMap.get( foodWord.lower(), ( None, None ) )
-            if emoji:
-               emojiScore[ emoji ] += weight
-         maxWeight = 25 # threshold
-         emojiWinner = 'cutlery'
-         for ( emoji, weight ) in emojiScore.iteritems():
-            if weight > maxWeight:
-               maxWeight = weight
-               emojiWinner =  emoji
-         emojiList.append( emojiWinner )
-      foods = map( lambda foodLine, emoji: unicode( emojiMap[ emoji ], 'utf-8' ) + foodLine, foods, emojiList )
-      soups = map( lambda soupLine: unicode( emojiMap[ 'soup' ], 'utf-8' ) + soupLine, soups )
+      resp = downloadMenu( MENU_URL )
+   if resp is None:
+      return
 
-      # Compose tweet (s)
-      charCount = 0
-      lines = foods + soups
-      tweets = [ '' ]
-      i = 0
-      for line in lines:
-         if line.strip():
-            chars = len( line ) + 1
-            if chars + charCount > 140:
-               tweets.append( '' )
-               i += 1
-               charCount = 0
-            tweets[ i ] += line + '\n'
-            charCount += chars
+   htmlParser = BeautifulSoup( resp, features='html.parser' )
+   menuData = getMenuSections( htmlParser, today )
+   soups, foods = soupsAndOthers( menuData )
+   emojiList = []
+   for foodLine in foods:
+      emojiScore = { k: 0 for k, v in emojiMap.iteritems() }
+      for foodWord in foodLine.split( ' ' ):
+         ( emoji, weight ) = wordMap.get( foodWord.lower(), ( None, None ) )
+         if emoji:
+            emojiScore[ emoji ] += weight
+      maxWeight = 25 # threshold
+      emojiWinner = 'cutlery'
+      for ( emoji, weight ) in emojiScore.iteritems():
+         if weight > maxWeight:
+            maxWeight = weight
+            emojiWinner =  emoji
+      emojiList.append( emojiWinner )
+   foods = map( lambda foodLine, emoji: unicode( emojiMap[ emoji ], 'utf-8' ) + foodLine, foods, emojiList )
+   soups = map( lambda soupLine: unicode( emojiMap[ 'soup' ], 'utf-8' ) + soupLine, soups )
 
-      if len( tweets ) > 2:
-         print 'length of tweets exceeds 2 len is %d' % len( tweets )
+   # Compose tweet (s)
+   charCount = 0
+   lines = foods + soups
+   tweets = [ '' ]
+   i = 0
+   for line in lines:
+      if line.strip():
+         chars = len( line ) + 1
+         if chars + charCount > 140:
+            tweets.append( '' )
+            i += 1
+            charCount = 0
+         tweets[ i ] += line + '\n'
+         charCount += chars
 
-      tweets = reversed( tweets )
-      for tweet in tweets:
-         tweeter.update_status( status=tweet )
+   if len( tweets ) > 2:
+      print 'length of tweets exceeds 2 len is %d' % len( tweets )
+
+   tweets = reversed( tweets )
+   for tweet in tweets:
+      tweeter.update_status( status=tweet )
 
 if __name__ == "__main__":
    parser = argparse.ArgumentParser()
    parser.add_argument( '-d', '--debug', help='Print results instead of tweeting',
                         action='store_true' )
+   parser.add_argument( '-f', '--local-file', help='Local file to load menu from instead of downloading menu' )
    args = parser.parse_args()
    main( args )
