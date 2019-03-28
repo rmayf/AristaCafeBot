@@ -171,9 +171,12 @@ def createTweets( lines ):
    return tweets
 
 def main( args ):
-   today = datetime.date.today().strftime( '%A' )
-   if today in [ 'Saturday', 'Sunday' ]:
-      print 'not running on the weekends'
+   if args.day_of_week:
+      today = args.day_of_week
+   else:
+      today = datetime.date.today().strftime( '%A' )
+   if today not in [ 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday' ]:
+      print 'not running on %s' % today
       exit()
 
    if args.debug:
@@ -224,5 +227,6 @@ if __name__ == "__main__":
    parser.add_argument( '-d', '--debug', help='Print results instead of tweeting',
                         action='store_true' )
    parser.add_argument( '-f', '--local-file', help='Local file to load menu from instead of downloading menu' )
+   parser.add_argument( '-w', '--day-of-week', help='Day of the week to use instead of today')
    args = parser.parse_args()
    main( args )
